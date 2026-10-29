@@ -51,3 +51,54 @@ main {
   font-size: 1.2em;
   color: #FFD700;
 }
+
+.hidden {
+  display: none;
+}
+
+#chat-area {
+  margin-top: 20px;
+}
+
+.chat-input-row {
+  display: flex;
+  gap: 8px;
+  justify-content: center;
+}
+
+#chat-input {
+  flex: 1;
+  max-width: 400px;
+  padding: 10px;
+  font-size: 1em;
+  background-color: #000000;
+  color: #FFD700;
+  border: 2px solid #FFD700;
+  border-radius: 8px;
+}
+
+#send-button {
+  background-color: #FFD700;
+  color: #000000;
+  border: none;
+  border-radius: 8px;
+  padding: 10px 16px;
+  font-size: 1em;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+#message-list {
+  list-style: none;
+  padding: 0;
+  margin-top: 20px;
+  text-align: left;
+}
+
+#message-list li {
+  border: 1px solid #FFD700;
+  border-radius: 8px;
+  padding: 10px;
+  margin-bottom: 8px;
+  color: #FFD700;
+}
