@@ -1,9 +1,5 @@
-const tabButtons = document.querySelectorAll(".tab-button");
-const message = document.getElementById("message");
+You are my coding partner. I am a complete beginner. My website "Yelo! Messenger" already has these files: index.html, style.css and script.js. It is a black background with gold text, a heading, a welcome line, and four tabs: Chats, Updates, Calls, Business. Clicking a tab shows a message naming the tab.
 
-tabButtons.forEach(function (button) {
-  button.addEventListener("click", function () {
-    const tabName = button.getAttribute("data-tab");
-    message.textContent = "You opened the " + tabName + " tab.";
-  });
-});
+Add ONE feature only: local chats under the Chats tab. When the Chats tab is clicked, show a text box and a Send button, and a list of messages below them. When Send is clicked, add the typed message to the list, then clear the text box. Save the messages in the phone's browser using localStorage, so they are still there after the page is reloaded. Keep the other three tabs exactly as they are. Keep the same black and gold style. Do not add sign-in, a database, or any libraries.
+
+Give me the complete replacement versions of index.html, style.css and script.js, one file at a time, with the full code for each file. Explain what each file does in very simple English. Tell me the exact steps to test the feature on my phone.
