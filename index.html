@@ -24,11 +24,25 @@
     <p id="message"></p>
 
     <div id="chat-area" class="hidden">
-      <div class="chat-input-row">
-        <input type="text" id="chat-input" placeholder="Type a message">
-        <button id="send-button">Send</button>
+      <div id="chat-list-area">
+        <h3>Requests for your business</h3>
+        <ul id="incoming-list" class="list"></ul>
+
+        <h3>Your chats</h3>
+        <ul id="connection-list" class="list"></ul>
       </div>
-      <ul id="message-list"></ul>
+
+      <div id="thread-area" class="hidden">
+        <button id="thread-back" class="list-button secondary">Back to chats</button>
+        <h3 id="thread-title"></h3>
+        <ul id="thread-messages" class="list"></ul>
+        <div class="chat-input-row">
+          <input type="text" id="thread-input" placeholder="Type a message">
+          <button id="thread-send">Send</button>
+        </div>
+      </div>
+
+      <p id="chat-status"></p>
     </div>
 
     <div id="business-area" class="hidden">
@@ -52,4 +66,4 @@
 
   <script src="script.js"></script>
 </body>
-</html>
+  </html>
