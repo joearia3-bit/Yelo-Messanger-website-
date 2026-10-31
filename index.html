@@ -34,9 +34,18 @@
     <div id="business-area" class="hidden">
       <div class="form-column">
         <input type="text" id="business-name" placeholder="Business name">
-        <textarea id="business-description" placeholder="Describe your business"></textarea>
+        <input type="text" id="business-category" placeholder="Category (for example, Coffee)">
+        <input type="text" id="business-town" placeholder="Town (for example, Port Moresby)">
+        <input type="text" id="business-phone" placeholder="Phone number">
+        <textarea id="business-description" placeholder="Describe your business (up to 200 characters)"></textarea>
         <button id="business-save-button">Save business</button>
+        <p id="business-status"></p>
       </div>
+
+      <h3>Your businesses</h3>
+      <ul id="my-business-list"></ul>
+
+      <h3>Verified businesses</h3>
       <ul id="business-list"></ul>
     </div>
   </main>
