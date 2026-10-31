@@ -3,27 +3,84 @@ const SUPABASE_KEY = "sb_publishable_PbC6peJ59FeqjMF1X75RbA_rNoh_Bkn";
 const SESSION_KEY = "yelo-session";
 
 const adminStatus = document.getElementById("admin-status");
+const loginArea = document.getElementById("login-area");
+const loginStatus = document.getElementById("login-status");
+const adminEmail = document.getElementById("admin-email");
+const adminPassword = document.getElementById("admin-password");
+const adminSignInButton = document.getElementById("admin-signin-button");
 const pendingList = document.getElementById("pending-list");
 const verifiedList = document.getElementById("verified-list");
 const blockedList = document.getElementById("blocked-list");
 
-function getSession() {
-  const saved = localStorage.getItem(SESSION_KEY);
-  return saved ? JSON.parse(saved) : null;
+function saveSession(data, email) {
+  const expiresAt = data.expires_at || Math.floor(Date.now() / 1000) + (data.expires_in || 3600);
+  const session = {
+    token: data.access_token,
+    refreshToken: data.refresh_token,
+    expiresAt: expiresAt,
+    userId: data.user.id,
+    email: data.user.email || email || ""
+  };
+  localStorage.setItem(SESSION_KEY, JSON.stringify(session));
+  return session;
 }
 
-function authHeaders(session) {
-  return {
+async function refreshSession(session) {
+  if (!session.refreshToken) {
+    return null;
+  }
+
+  const response = await fetch(SUPABASE_URL + "/auth/v1/token?grant_type=refresh_token", {
+    method: "POST",
+    headers: {
+      "apikey": SUPABASE_KEY,
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify({ refresh_token: session.refreshToken })
+  });
+
+  if (!response.ok) {
+    return null;
+  }
+
+  return saveSession(await response.json(), session.email);
+}
+
+async function getValidSession() {
+  const saved = localStorage.getItem(SESSION_KEY);
+  if (!saved) {
+    return null;
+  }
+
+  const session = JSON.parse(saved);
+  const now = Math.floor(Date.now() / 1000);
+
+  if (session.expiresAt && now > session.expiresAt - 60) {
+    const refreshed = await refreshSession(session);
+    if (!refreshed) {
+      localStorage.removeItem(SESSION_KEY);
+      return null;
+    }
+    return refreshed;
+  }
+
+  return session;
+}
+
+function authHeaders(session, extra) {
+  return Object.assign({
     "apikey": SUPABASE_KEY,
     "Authorization": "Bearer " + session.token,
     "Content-Type": "application/json"
-  };
+  }, extra || {});
 }
 
 function checkResponse(response) {
   if (response.status === 401) {
     localStorage.removeItem(SESSION_KEY);
-    throw new Error("Your session has expired. Open the main site, tap Business, then come back here.");
+    const error = new Error("Your session has expired. Sign in again.");
+    error.needsLogin = true;
+    throw error;
   }
   if (!response.ok) {
     throw new Error("Something went wrong on the server (error " + response.status + ").");
@@ -31,10 +88,55 @@ function checkResponse(response) {
   return response;
 }
 
+function showLogin(text) {
+  loginArea.classList.remove("hidden");
+  loginStatus.textContent = text;
+  adminStatus.textContent = "";
+}
+
+function hideLogin() {
+  loginArea.classList.add("hidden");
+  loginStatus.textContent = "";
+}
+
+async function signIn() {
+  const email = adminEmail.value.trim();
+  const password = adminPassword.value;
+
+  if (!email.includes("@") || password === "") {
+    loginStatus.textContent = "Please enter your email and password.";
+    return;
+  }
+
+  loginStatus.textContent = "Signing in...";
+
+  try {
+    const response = await fetch(SUPABASE_URL + "/auth/v1/token?grant_type=password", {
+      method: "POST",
+      headers: {
+        "apikey": SUPABASE_KEY,
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({ email: email, password: password })
+    });
+
+    if (!response.ok) {
+      throw new Error("Email or password is not correct.");
+    }
+
+    saveSession(await response.json(), email);
+    adminPassword.value = "";
+    hideLogin();
+    await loadAdmin();
+  } catch (error) {
+    loginStatus.textContent = error.message;
+  }
+}
+
 async function changeBusiness(session, id, changes) {
   const response = await fetch(SUPABASE_URL + "/rest/v1/businesses?id=eq." + id, {
     method: "PATCH",
-    headers: Object.assign(authHeaders(session), { "Prefer": "return=minimal" }),
+    headers: authHeaders(session, { "Prefer": "return=minimal" }),
     body: JSON.stringify(changes)
   });
   checkResponse(response);
@@ -85,21 +187,22 @@ async function loadAdmin() {
   verifiedList.innerHTML = "";
   blockedList.innerHTML = "";
   adminStatus.textContent = "";
-
-  const session = getSession();
-  if (!session) {
-    adminStatus.textContent = "Open the main site and tap Business first, so this phone has a session. Then come back here.";
-    return;
-  }
+  hideLogin();
 
   try {
+    const session = await getValidSession();
+    if (!session) {
+      showLogin("Sign in with your admin email and password.");
+      return;
+    }
+
     const adminResponse = checkResponse(await fetch(
       SUPABASE_URL + "/rest/v1/admins?select=user_id&user_id=eq." + session.userId,
       { headers: authHeaders(session) }
     ));
     const admins = await adminResponse.json();
     if (admins.length === 0) {
-      adminStatus.textContent = "This phone is not an admin account.";
+      adminStatus.textContent = "This account is not an admin.";
       return;
     }
 
@@ -143,8 +246,14 @@ async function loadAdmin() {
       adminStatus.textContent = "No businesses yet.";
     }
   } catch (error) {
-    adminStatus.textContent = error.message;
+    if (error.needsLogin) {
+      showLogin(error.message);
+    } else {
+      adminStatus.textContent = error.message;
+    }
   }
 }
+
+adminSignInButton.addEventListener("click", signIn);
 
 loadAdmin();
