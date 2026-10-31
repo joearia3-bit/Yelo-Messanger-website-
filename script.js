@@ -34,6 +34,7 @@ const SUPABASE_URL = "https://pzbilniamaidcicacclo.supabase.co";
 const SUPABASE_KEY = "sb_publishable_PbC6peJ59FeqjMF1X75RbA_rNoh_Bkn";
 const SESSION_KEY = "yelo-session";
 const POLL_MS = 4000;
+const MIN_PASSWORD_LENGTH = 12;
 
 let currentConnection = null;
 let pollTimer = null;
@@ -53,6 +54,15 @@ function saveSession(data, email) {
   return session;
 }
 
+async function errorDetail(response) {
+  try {
+    const data = await response.json();
+    return data.msg || data.message || data.error_description || data.error || "";
+  } catch (error) {
+    return "";
+  }
+}
+
 async function startAnonymousSession() {
   const response = await fetch(SUPABASE_URL + "/auth/v1/signup", {
     method: "POST",
@@ -64,7 +74,8 @@ async function startAnonymousSession() {
   });
 
   if (!response.ok) {
-    throw new Error("Could not start a session. Check that anonymous sign-ins are turned on in Supabase.");
+    const detail = await errorDetail(response);
+    throw new Error("Could not start a session" + (detail ? ": " + detail : " (error " + response.status + ").") + " Check that anonymous sign-ins are turned on in Supabase.");
   }
 
   return saveSession(await response.json(), "");
@@ -164,8 +175,8 @@ async function saveEmailLogin() {
     showBusinessMessage("Please enter a valid email address.");
     return;
   }
-  if (password.length < 6) {
-    showBusinessMessage("Please use a password of at least 6 characters.");
+  if (password.length < MIN_PASSWORD_LENGTH) {
+    showBusinessMessage("Please use a password of at least " + MIN_PASSWORD_LENGTH + " characters.");
     return;
   }
 
@@ -173,11 +184,16 @@ async function saveEmailLogin() {
 
   try {
     const session = await getSession();
-    checkResponse(await fetch(SUPABASE_URL + "/auth/v1/user", {
+    const response = await fetch(SUPABASE_URL + "/auth/v1/user", {
       method: "PUT",
       headers: headers(session, { "Content-Type": "application/json" }),
       body: JSON.stringify({ email: email, password: password })
-    }));
+    });
+
+    if (!response.ok) {
+      const detail = await errorDetail(response);
+      throw new Error("Could not save the email login" + (detail ? ": " + detail : " (error " + response.status + ")."));
+    }
 
     accountEmail.value = "";
     accountPassword.value = "";
@@ -209,7 +225,8 @@ async function signIn() {
     });
 
     if (!response.ok) {
-      throw new Error("Email or password is not correct. If you just signed up, tap the confirmation link in your email first.");
+      const detail = await errorDetail(response);
+      throw new Error("Sign-in failed" + (detail ? ": " + detail : " (error " + response.status + ").") + " If you just signed up, tap the confirmation link in your email first.");
     }
 
     saveSession(await response.json(), email);
