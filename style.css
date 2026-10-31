@@ -77,7 +77,8 @@ main {
   border-radius: 8px;
 }
 
-#send-button {
+#send-button,
+#business-save-button {
   background-color: #FFD700;
   color: #000000;
   border: none;
@@ -101,4 +102,51 @@ main {
   padding: 10px;
   margin-bottom: 8px;
   color: #FFD700;
+}
+
+#business-area {
+  margin-top: 20px;
+}
+
+.form-column {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  max-width: 500px;
+  margin: 0 auto;
+}
+
+#business-name,
+#business-description {
+  padding: 10px;
+  font-size: 1em;
+  font-family: Arial, Helvetica, sans-serif;
+  background-color: #000000;
+  color: #FFD700;
+  border: 2px solid #FFD700;
+  border-radius: 8px;
+}
+
+#business-description {
+  min-height: 80px;
+  resize: vertical;
+}
+
+#business-list {
+  list-style: none;
+  padding: 0;
+  margin-top: 20px;
+  text-align: left;
+}
+
+#business-list li {
+  border: 1px solid #FFD700;
+  border-radius: 8px;
+  padding: 10px;
+  margin-bottom: 8px;
+  color: #FFD700;
+}
+
+#business-list p {
+  margin: 6px 0 0 0;
 }
