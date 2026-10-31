@@ -136,7 +136,7 @@ function headers(session, extra) {
 function checkResponse(response) {
   if (response.status === 401) {
     localStorage.removeItem(SESSION_KEY);
-    throw new Error("Your session has expired. Sign in with your email below, or tap the Business tab again.");
+    throw new Error("Your session has expired. Sign in again below, or tap the Business tab again.");
   }
   if (!response.ok) {
     throw new Error("Something went wrong on the server (error " + response.status + ").");
@@ -163,7 +163,7 @@ function updateAccountStatus() {
   if (session && session.email) {
     accountStatus.textContent = "Signed in as " + session.email + ".";
   } else {
-    accountStatus.textContent = "Not signed in with email yet. Save an email login so you can keep your businesses and chats, and sign in on another phone.";
+    accountStatus.textContent = "Not signed in yet. Save an email login so you can keep your businesses and chats, and sign in on another phone.";
   }
 }
 
@@ -192,7 +192,7 @@ async function saveEmailLogin() {
 
     if (!response.ok) {
       const detail = await errorDetail(response);
-      throw new Error("Could not save the email login" + (detail ? ": " + detail : " (error " + response.status + ")."));
+      throw new Error("Could not save the login" + (detail ? ": " + detail : " (error " + response.status + ").."));
     }
 
     accountEmail.value = "";
