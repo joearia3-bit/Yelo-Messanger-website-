@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Yelo! Admin</title>
+  <link rel="stylesheet" href="style.css">
+  <style>
+    .admin-list {
+      list-style: none;
+      padding: 0;
+      text-align: left;
+    }
+    .admin-list li {
+      border: 1px solid #FFD700;
+      border-radius: 8px;
+      padding: 10px;
+      margin-bottom: 10px;
+      color: #FFD700;
+    }
+    .admin-list p {
+      margin: 4px 0;
+    }
+    .admin-button {
+      background-color: #FFD700;
+      color: #000000;
+      border: none;
+      border-radius: 8px;
+      padding: 8px 14px;
+      font-size: 0.95em;
+      font-weight: bold;
+      margin: 8px 6px 0 0;
+      cursor: pointer;
+    }
+    .admin-button.secondary {
+      background-color: #000000;
+      color: #FFD700;
+      border: 2px solid #FFD700;
+    }
+    .admin-section {
+      margin-top: 30px;
+      text-align: left;
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <h1>Yelo! Admin</h1>
+    <p><a href="index.html" style="color:#FFD700;">Back to Yelo! Messenger</a></p>
+  </header>
+
+  <main>
+    <p id="admin-status"></p>
+
+    <div class="admin-section">
+      <h3>Waiting for verification</h3>
+      <ul id="pending-list" class="admin-list"></ul>
+    </div>
+
+    <div class="admin-section">
+      <h3>Verified</h3>
+      <ul id="verified-list" class="admin-list"></ul>
+    </div>
+
+    <div class="admin-section">
+      <h3>Blocked</h3>
+      <ul id="blocked-list" class="admin-list"></ul>
+    </div>
+  </main>
+
+  <script src="admin.js"></script>
+</body>
+</html>
