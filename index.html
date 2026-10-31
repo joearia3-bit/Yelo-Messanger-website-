@@ -3,78 +3,97 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Yelo! Messenger</title>
+  <title>Yelo! Admin</title>
   <link rel="stylesheet" href="style.css">
+  <style>
+    .admin-list {
+      list-style: none;
+      padding: 0;
+      text-align: left;
+    }
+    .admin-list li {
+      border: 1px solid #FFD700;
+      border-radius: 8px;
+      padding: 10px;
+      margin-bottom: 10px;
+      color: #FFD700;
+    }
+    .admin-list p {
+      margin: 4px 0;
+    }
+    .admin-button {
+      background-color: #FFD700;
+      color: #000000;
+      border: none;
+      border-radius: 8px;
+      padding: 8px 14px;
+      font-size: 0.95em;
+      font-weight: bold;
+      margin: 8px 6px 0 0;
+      cursor: pointer;
+    }
+    .admin-button.secondary {
+      background-color: #000000;
+      color: #FFD700;
+      border: 2px solid #FFD700;
+    }
+    .admin-section {
+      margin-top: 30px;
+      text-align: left;
+    }
+    .admin-form {
+      text-align: center;
+      margin-top: 20px;
+    }
+    .admin-form input {
+      display: block;
+      width: 100%;
+      max-width: 400px;
+      margin: 8px auto;
+      padding: 10px;
+      font-size: 1em;
+      box-sizing: border-box;
+      background-color: #000000;
+      color: #FFD700;
+      border: 2px solid #FFD700;
+      border-radius: 8px;
+    }
+  </style>
 </head>
 <body>
 
   <header>
-    <h1>Yelo! Messenger</h1>
-    <p>Chat with your customers and discover local businesses in Papua New Guinea.</p>
+    <h1>Yelo! Admin</h1>
+    <p><a href="index.html" style="color:#FFD700;">Back to Yelo! Messenger</a></p>
   </header>
 
-  <nav>
-    <button class="tab-button" data-tab="Chats">Chats</button>
-    <button class="tab-button" data-tab="Updates">Updates</button>
-    <button class="tab-button" data-tab="Calls">Calls</button>
-    <button class="tab-button" data-tab="Business">Business</button>
-  </nav>
-
   <main>
-    <p id="message"></p>
-
-    <div id="chat-area" class="hidden">
-      <div id="chat-list-area">
-        <h3>Requests for your business</h3>
-        <ul id="incoming-list" class="list"></ul>
-
-        <h3>Your chats</h3>
-        <ul id="connection-list" class="list"></ul>
-      </div>
-
-      <div id="thread-area" class="hidden">
-        <button id="thread-back" class="list-button secondary">Back to chats</button>
-        <h3 id="thread-title"></h3>
-        <ul id="thread-messages" class="list"></ul>
-        <div class="chat-input-row">
-          <input type="text" id="thread-input" placeholder="Type a message">
-          <button id="thread-send">Send</button>
-        </div>
-      </div>
-
-      <p id="chat-status"></p>
+    <div id="login-area" class="hidden admin-form">
+      <h3>Admin sign in</h3>
+      <input type="email" id="admin-email" placeholder="Email">
+      <input type="password" id="admin-password" placeholder="Password">
+      <button id="admin-signin-button" class="admin-button">Sign in</button>
+      <p id="login-status"></p>
     </div>
 
-    <div id="business-area" class="hidden">
-      <div class="form-column">
-        <h3>Your login</h3>
-        <p id="account-status"></p>
-        <input type="email" id="account-email" placeholder="Email">
-        <input type="password" id="account-password" placeholder="Password (at least 6 characters)">
-        <button id="account-save-button" class="list-button">Save email login</button>
-        <button id="account-signin-button" class="list-button secondary">Sign in</button>
-        <button id="account-signout-button" class="list-button secondary">Sign out</button>
-      </div>
+    <p id="admin-status"></p>
 
-      <div class="form-column">
-        <h3>Register a business</h3>
-        <input type="text" id="business-name" placeholder="Business name">
-        <input type="text" id="business-category" placeholder="Category (for example, Coffee)">
-        <input type="text" id="business-town" placeholder="Town (for example, Port Moresby)">
-        <input type="text" id="business-phone" placeholder="Phone number">
-        <textarea id="business-description" placeholder="Describe your business (up to 200 characters)"></textarea>
-        <button id="business-save-button">Save business</button>
-        <p id="business-status"></p>
-      </div>
+    <div class="admin-section">
+      <h3>Waiting for verification</h3>
+      <ul id="pending-list" class="admin-list"></ul>
+    </div>
 
-      <h3>Your businesses</h3>
-      <ul id="my-business-list"></ul>
+    <div class="admin-section">
+      <h3>Verified</h3>
+      <ul id="verified-list" class="admin-list"></ul>
+    </div>
 
-      <h3>Verified businesses</h3>
-      <ul id="business-list"></ul>
+    <div class="admin-section">
+      <h3>Blocked</h3>
+      <ul id="blocked-list" class="admin-list"></ul>
     </div>
   </main>
 
-  <script src="script.js"></script>
+  <script src="admin.js"></script>
 </body>
 </html>
