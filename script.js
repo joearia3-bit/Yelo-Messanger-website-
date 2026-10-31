@@ -14,6 +14,12 @@ const threadBack = document.getElementById("thread-back");
 const chatStatus = document.getElementById("chat-status");
 
 const businessArea = document.getElementById("business-area");
+const accountStatus = document.getElementById("account-status");
+const accountEmail = document.getElementById("account-email");
+const accountPassword = document.getElementById("account-password");
+const accountSaveButton = document.getElementById("account-save-button");
+const accountSignInButton = document.getElementById("account-signin-button");
+const accountSignOutButton = document.getElementById("account-signout-button");
 const businessName = document.getElementById("business-name");
 const businessCategory = document.getElementById("business-category");
 const businessTown = document.getElementById("business-town");
@@ -32,14 +38,22 @@ const POLL_MS = 4000;
 let currentConnection = null;
 let pollTimer = null;
 
-// ----- Session and helpers -----
+// ----- Session and login -----
 
-async function getSession() {
-  const saved = localStorage.getItem(SESSION_KEY);
-  if (saved) {
-    return JSON.parse(saved);
-  }
+function saveSession(data, email) {
+  const expiresAt = data.expires_at || Math.floor(Date.now() / 1000) + (data.expires_in || 3600);
+  const session = {
+    token: data.access_token,
+    refreshToken: data.refresh_token,
+    expiresAt: expiresAt,
+    userId: data.user.id,
+    email: data.user.email || email || ""
+  };
+  localStorage.setItem(SESSION_KEY, JSON.stringify(session));
+  return session;
+}
 
+async function startAnonymousSession() {
   const response = await fetch(SUPABASE_URL + "/auth/v1/signup", {
     method: "POST",
     headers: {
@@ -53,9 +67,51 @@ async function getSession() {
     throw new Error("Could not start a session. Check that anonymous sign-ins are turned on in Supabase.");
   }
 
-  const data = await response.json();
-  const session = { token: data.access_token, userId: data.user.id };
-  localStorage.setItem(SESSION_KEY, JSON.stringify(session));
+  return saveSession(await response.json(), "");
+}
+
+async function refreshSession(session) {
+  if (!session.refreshToken) {
+    return null;
+  }
+
+  const response = await fetch(SUPABASE_URL + "/auth/v1/token?grant_type=refresh_token", {
+    method: "POST",
+    headers: {
+      "apikey": SUPABASE_KEY,
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify({ refresh_token: session.refreshToken })
+  });
+
+  if (!response.ok) {
+    return null;
+  }
+
+  return saveSession(await response.json(), session.email);
+}
+
+async function getSession() {
+  const saved = localStorage.getItem(SESSION_KEY);
+  if (!saved) {
+    return startAnonymousSession();
+  }
+
+  const session = JSON.parse(saved);
+  const now = Math.floor(Date.now() / 1000);
+
+  if (session.expiresAt && now > session.expiresAt - 60) {
+    const refreshed = await refreshSession(session);
+    if (refreshed) {
+      return refreshed;
+    }
+    localStorage.removeItem(SESSION_KEY);
+    if (session.email) {
+      throw new Error("Please sign in again with your email and password.");
+    }
+    return startAnonymousSession();
+  }
+
   return session;
 }
 
@@ -69,7 +125,7 @@ function headers(session, extra) {
 function checkResponse(response) {
   if (response.status === 401) {
     localStorage.removeItem(SESSION_KEY);
-    throw new Error("Your session has expired. Tap the Business tab again.");
+    throw new Error("Your session has expired. Sign in with your email below, or tap the Business tab again.");
   }
   if (!response.ok) {
     throw new Error("Something went wrong on the server (error " + response.status + ").");
@@ -87,6 +143,105 @@ function showChatStatus(text) {
 
 function showBusinessMessage(text) {
   businessStatus.textContent = text;
+}
+
+function updateAccountStatus() {
+  const saved = localStorage.getItem(SESSION_KEY);
+  const session = saved ? JSON.parse(saved) : null;
+
+  if (session && session.email) {
+    accountStatus.textContent = "Signed in as " + session.email + ".";
+  } else {
+    accountStatus.textContent = "Not signed in with email yet. Save an email login so you can keep your businesses and chats, and sign in on another phone.";
+  }
+}
+
+async function saveEmailLogin() {
+  const email = accountEmail.value.trim();
+  const password = accountPassword.value;
+
+  if (!email.includes("@")) {
+    showBusinessMessage("Please enter a valid email address.");
+    return;
+  }
+  if (password.length < 6) {
+    showBusinessMessage("Please use a password of at least 6 characters.");
+    return;
+  }
+
+  showBusinessMessage("Saving your login...");
+
+  try {
+    const session = await getSession();
+    checkResponse(await fetch(SUPABASE_URL + "/auth/v1/user", {
+      method: "PUT",
+      headers: headers(session, { "Content-Type": "application/json" }),
+      body: JSON.stringify({ email: email, password: password })
+    }));
+
+    accountEmail.value = "";
+    accountPassword.value = "";
+    showBusinessMessage("Almost done. Check your email and tap the confirmation link. Then tap Sign in with the same email and password.");
+  } catch (error) {
+    showBusinessMessage(error.message);
+  }
+}
+
+async function signIn() {
+  const email = accountEmail.value.trim();
+  const password = accountPassword.value;
+
+  if (!email.includes("@") || password === "") {
+    showBusinessMessage("Please enter your email and password.");
+    return;
+  }
+
+  showBusinessMessage("Signing in...");
+
+  try {
+    const response = await fetch(SUPABASE_URL + "/auth/v1/token?grant_type=password", {
+      method: "POST",
+      headers: {
+        "apikey": SUPABASE_KEY,
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({ email: email, password: password })
+    });
+
+    if (!response.ok) {
+      throw new Error("Email or password is not correct. If you just signed up, tap the confirmation link in your email first.");
+    }
+
+    saveSession(await response.json(), email);
+    accountEmail.value = "";
+    accountPassword.value = "";
+    updateAccountStatus();
+    await loadBusinesses();
+    showBusinessMessage("Signed in.");
+  } catch (error) {
+    showBusinessMessage(error.message);
+  }
+}
+
+async function signOut() {
+  localStorage.removeItem(SESSION_KEY);
+  updateAccountStatus();
+  await loadBusinesses();
+  showBusinessMessage("Signed out. A new session has started on this phone.");
+}
+
+// ----- Chats (shared, saved online) -----
+
+function stopPolling() {
+  if (pollTimer) {
+    clearInterval(pollTimer);
+    pollTimer = null;
+  }
+}
+
+function startPolling() {
+  stopPolling();
+  pollTimer = setInterval(loadThread, POLL_MS);
 }
 
 function makeItem(title, lines) {
@@ -111,20 +266,6 @@ function makeButton(label, onClick, secondary) {
   button.className = secondary ? "list-button secondary" : "list-button";
   button.addEventListener("click", onClick);
   return button;
-}
-
-// ----- Chats (shared, saved online) -----
-
-function stopPolling() {
-  if (pollTimer) {
-    clearInterval(pollTimer);
-    pollTimer = null;
-  }
-}
-
-function startPolling() {
-  stopPolling();
-  pollTimer = setInterval(loadThread, POLL_MS);
 }
 
 async function loadChats() {
@@ -369,17 +510,20 @@ tabButtons.forEach(function (button) {
       loadChats();
     } else if (tabName === "Business") {
       businessArea.classList.remove("hidden");
+      updateAccountStatus();
       loadBusinesses();
     }
   });
 });
 
-// ----- Chat thread buttons -----
+// ----- Buttons -----
 
 threadSend.addEventListener("click", sendThreadMessage);
 threadBack.addEventListener("click", loadChats);
 
-// ----- Save business -----
+accountSaveButton.addEventListener("click", saveEmailLogin);
+accountSignInButton.addEventListener("click", signIn);
+accountSignOutButton.addEventListener("click", signOut);
 
 businessSaveButton.addEventListener("click", async function () {
   const name = businessName.value.trim();
@@ -433,4 +577,4 @@ businessSaveButton.addEventListener("click", async function () {
   } catch (error) {
     showBusinessMessage(error.message);
   }
-})
+});
