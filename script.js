@@ -1,5 +1,55 @@
-You are my coding partner. I am a complete beginner. My website "Yelo! Messenger" already has these files: index.html, style.css and script.js. It is a black background with gold text, a heading, a welcome line, and four tabs: Chats, Updates, Calls, Business. Clicking a tab shows a message naming the tab.
+const tabButtons = document.querySelectorAll(".tab-button");
+const message = document.getElementById("message");
+const chatArea = document.getElementById("chat-area");
+const chatInput = document.getElementById("chat-input");
+const sendButton = document.getElementById("send-button");
+const messageList = document.getElementById("message-list");
 
-Add ONE feature only: local chats under the Chats tab. When the Chats tab is clicked, show a text box and a Send button, and a list of messages below them. When Send is clicked, add the typed message to the list, then clear the text box. Save the messages in the phone's browser using localStorage, so they are still there after the page is reloaded. Keep the other three tabs exactly as they are. Keep the same black and gold style. Do not add sign-in, a database, or any libraries.
+const STORAGE_KEY = "yelo-chat-messages";
 
-Give me the complete replacement versions of index.html, style.css and script.js, one file at a time, with the full code for each file. Explain what each file does in very simple English. Tell me the exact steps to test the feature on my phone.
+function loadMessages() {
+  const saved = localStorage.getItem(STORAGE_KEY);
+  return saved ? JSON.parse(saved) : [];
+}
+
+function saveMessages(list) {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(list));
+}
+
+function showMessages() {
+  messageList.innerHTML = "";
+  const list = loadMessages();
+  list.forEach(function (text) {
+    const item = document.createElement("li");
+    item.textContent = text;
+    messageList.appendChild(item);
+  });
+}
+
+tabButtons.forEach(function (button) {
+  button.addEventListener("click", function () {
+    const tabName = button.getAttribute("data-tab");
+    message.textContent = "You opened the " + tabName + " tab.";
+
+    if (tabName === "Chats") {
+      chatArea.classList.remove("hidden");
+      showMessages();
+    } else {
+      chatArea.classList.add("hidden");
+    }
+  });
+});
+
+sendButton.addEventListener("click", function () {
+  const text = chatInput.value.trim();
+  if (text === "") {
+    return;
+  }
+
+  const list = loadMessages();
+  list.push(text);
+  saveMessages(list);
+
+  chatInput.value = "";
+  showMessages();
+});
